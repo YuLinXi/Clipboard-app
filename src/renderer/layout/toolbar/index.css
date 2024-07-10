@@ -1,0 +1,49 @@
+.Toolbar {
+  padding: 8px 7px 0px;
+  -webkit-app-region: drag;
+}
+
+.Toolbar-icon-group {
+  display: inline-flex;
+  align-items: center;
+  -webkit-app-region: no-drag;
+}
+
+.Toolbar-close,
+.Toolbar-mini {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: #fc5650;
+  text-align: center;
+  font-size: 12px;
+  line-height: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+}
+
+.Toolbar-close {
+  background-color: #fc5650;
+}
+
+
+.Toolbar-mini {
+  background-color: #FFBB43;
+  margin-left: 8px;
+}
+
+.Toolbar-close-icon,
+.Toolbar-mini-icon {
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.Toolbar-icon-group:hover .Toolbar-close-icon,
+.Toolbar-icon-group:hover .Toolbar-mini-icon {
+  opacity: 1;
+}
+
+
+

@@ -1,0 +1,23 @@
+.HeaderBar {
+  display: flex;
+  align-items: center;
+  padding: 16px 0;
+}
+
+.HeaderBar-right,
+.HeaderBar-left {
+  width: 40px;
+  text-align: center;
+}
+
+.HeaderBar-search {
+  flex: 1;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.HeaderBar-input {
+  border-radius: 5px;
+}

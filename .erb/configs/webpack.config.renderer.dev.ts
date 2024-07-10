@@ -96,18 +96,10 @@ const configuration: webpack.Configuration = {
       // SVG
       {
         test: /\.svg$/,
+        issuer: /\.(js|ts)x?$/,
         use: [
           {
             loader: '@svgr/webpack',
-            options: {
-              prettier: false,
-              svgo: false,
-              svgoConfig: {
-                plugins: [{ removeViewBox: false }],
-              },
-              titleProp: true,
-              ref: true,
-            },
           },
           'file-loader',
         ],

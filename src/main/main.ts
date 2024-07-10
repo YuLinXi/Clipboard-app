@@ -13,8 +13,13 @@ import { app, BrowserWindow, shell } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import MenuBuilder from './menu';
-import { resolveHtmlPath } from './util';
-import { shortcutCopy, shortcutPaste } from './clipboard';
+import { isDebug, resolveHtmlPath } from './util';
+import { shortcutOpen } from './shortcut';
+import TrayBuilder from './tray';
+import onWindowDrag from './drag';
+import { IPCReceiveMessage, IPCSendMessage } from './ipc';
+import globalState from './state';
+import ContextMenu from './context-menu';
 
 class AppUpdater {
   constructor() {
@@ -30,9 +35,6 @@ if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
   sourceMapSupport.install();
 }
-
-const isDebug =
-  process.env.NODE_ENV === 'development' || process.env.DEBUG_PROD === 'true';
 
 if (isDebug) {
   require('electron-debug')();
@@ -56,26 +58,21 @@ const createWindow = async () => {
     await installExtensions();
   }
 
-  const RESOURCES_PATH = app.isPackaged
-    ? path.join(process.resourcesPath, 'assets')
-    : path.join(__dirname, '../../assets');
-
-  const getAssetPath = (...paths: string[]): string => {
-    return path.join(RESOURCES_PATH, ...paths);
-  };
-
   mainWindow = new BrowserWindow({
     show: false,
-    width: 300,
-    height: 800,
+    width: 350,
+    height: 600,
+    frame: false,
     resizable: false,
-    icon: getAssetPath('icon.png'),
     webPreferences: {
       preload: app.isPackaged
         ? path.join(__dirname, 'preload.js')
         : path.join(__dirname, '../../.erb/dll/preload.js'),
     },
+    alwaysOnTop: true,
   });
+
+  mainWindow.setBackgroundColor('rgba(255,255,255)');
 
   mainWindow.loadURL(resolveHtmlPath('index.html'));
 
@@ -85,8 +82,6 @@ const createWindow = async () => {
     }
     if (process.env.START_MINIMIZED) {
       mainWindow.minimize();
-    } else {
-      mainWindow.show();
     }
   });
 
@@ -103,9 +98,19 @@ const createWindow = async () => {
     return { action: 'deny' };
   });
 
+  const trayBuilder = new TrayBuilder(mainWindow);
+
+  const contextMenu = new ContextMenu(mainWindow);
+
+  onWindowDrag(mainWindow);
   // Remove this if your app does not use auto updates
   // eslint-disable-next-line
   new AppUpdater();
+
+  return {
+    trayBuilder,
+    contextMenu,
+  };
 };
 
 /**
@@ -120,15 +125,27 @@ app.on('window-all-closed', () => {
   }
 });
 
+app.on('browser-window-blur', () => {
+  if (mainWindow && mainWindow.isVisible() && !globalState.fixed) {
+    mainWindow.hide();
+  }
+});
+
 app
   .whenReady()
   .then(async () => {
-    await createWindow();
-    shortcutCopy(mainWindow!);
-    shortcutPaste(mainWindow!);
+    const { trayBuilder, contextMenu } = await createWindow();
+    shortcutOpen(mainWindow!, {
+      trayBuilder,
+      tray: trayBuilder.tray,
+    });
+    globalState.trayIns = trayBuilder;
+    globalState.contextMenuIns = contextMenu;
+
+    IPCSendMessage(mainWindow!);
+    IPCReceiveMessage(mainWindow!, trayBuilder, contextMenu);
+
     app.on('activate', () => {
-      // On macOS it's common to re-create a window in the app when the
-      // dock icon is clicked and there are no other windows open.
       if (mainWindow === null) createWindow();
     });
   })

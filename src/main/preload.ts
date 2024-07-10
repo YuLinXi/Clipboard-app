@@ -4,15 +4,19 @@ import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
 
 export type Channels =
   | 'clipboard-changed'
-  | 'toggle-record-list'
-  | 'paste-text';
+  | 'paste-text'
+  | 'window-visible'
+  | 'window-resizable'
+  | 'window-fixed'
+  | 'context-menu'
+  | 'record-delete';
 
 const electronHandler = {
   ipcRenderer: {
-    sendMessage(channel: Channels, ...args: any[]) {
+    sendMessage(channel: Channels, ...args: unknown[]) {
       ipcRenderer.send(channel, ...args);
     },
-    on(channel: Channels, func: (...args: any[]) => void) {
+    on(channel: Channels, func: (...args: unknown[]) => void) {
       const subscription = (_event: IpcRendererEvent, ...args: any[]) =>
         func(...args);
       ipcRenderer.on(channel, subscription);
@@ -21,7 +25,7 @@ const electronHandler = {
         ipcRenderer.removeListener(channel, subscription);
       };
     },
-    once(channel: Channels, func: (...args: any[]) => void) {
+    once(channel: Channels, func: (...args: unknown[]) => void) {
       ipcRenderer.once(channel, (_event, ...args) => func(...args));
     },
   },
